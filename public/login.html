@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in | CPSU Student Dashboard</title>
+<style>
+  body {
+    margin: 0; padding: 16px; min-height: 100vh;
+    font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    background: #12161f; color: #e8ebf2;
+  }
+  .card {
+    width: 100%; max-width: 380px; margin: 0 auto; padding: 22px 26px 18px;
+    background: #1b2130; border: 1px solid #3a4562; border-radius: 14px;
+  }
+  .brand { text-align: center; margin-bottom: 14px; }
+  .brand img { width: 76px; height: 76px; object-fit: contain; display: block; margin: 0 auto 8px; }
+  .brand h1 { margin: 0; font-size: 1.35rem; }
+  .brand p { margin: 2px 0 0; color: #98a2b8; font-size: .88rem; }
+
+  label { display: block; margin: 12px 0 5px; font-size: .85rem; font-weight: 600; color: #98a2b8; }
+  .box { display: flex; align-items: center; background: #0f131b; border: 2px solid #5b6b94; border-radius: 8px; }
+  .box.focus { border-color: #5b8cff; }
+  .box input {
+    flex: 1; min-width: 0; padding: 10px 12px; border: 0; outline: none;
+    background: transparent; color: #e8ebf2; font: inherit; font-size: 1rem;
+  }
+  .toggle {
+    margin-right: 6px; padding: 5px 9px; border: 0; background: transparent;
+    color: #5b8cff; font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+  }
+  #btn {
+    display: block; width: 100%; margin-top: 16px; padding: 12px; border: 0; border-radius: 8px;
+    background: #5b8cff; color: #0d1220; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer;
+  }
+  #btn:disabled { opacity: .65; cursor: progress; }
+  #msg { margin: 10px 0 0; min-height: 1.2em; text-align: center; font-size: .88rem; color: #ff7b7b; }
+  
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <img src="/cpsu-logo.png" alt="CPSU seal" onerror="this.style.display='none'">
+      <h1>Student Dashboard</h1>
+      <p>Central Philippines State University</p>
+    </div>
+
+    <form id="loginForm" action="javascript:void(0)" novalidate>
+      <label for="username">Username</label>
+      <div class="box" id="boxUser">
+        <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus>
+      </div>
+
+      <label for="password">Password</label>
+      <div class="box" id="boxPass">
+        <input id="password" name="password" type="password" autocomplete="current-password">
+        <button type="button" class="toggle" id="toggle">Show</button>
+      </div>
+
+      <button type="submit" id="btn">Log in</button>
+      <p id="msg" role="alert"></p>
+    </form>
+   
+  </div>
+
+<script>
+  var form = document.getElementById('loginForm');
+  var userEl = document.getElementById('username');
+  var passEl = document.getElementById('password');
+  var msg = document.getElementById('msg');
+  var btn = document.getElementById('btn');
+  var toggle = document.getElementById('toggle');
+
+  [['username', 'boxUser'], ['password', 'boxPass']].forEach(function (p) {
+    var input = document.getElementById(p[0]), box = document.getElementById(p[1]);
+    input.addEventListener('focus', function () { box.classList.add('focus'); });
+    input.addEventListener('blur', function () { box.classList.remove('focus'); });
+  });
+
+  toggle.addEventListener('click', function () {
+    var show = passEl.type === 'password';
+    passEl.type = show ? 'text' : 'password';
+    toggle.textContent = show ? 'Hide' : 'Show';
+    passEl.focus();
+  });
+
+  // Enter sa Username -> Password. Enter sa Password -> Log in.
+  userEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); passEl.focus(); }
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    msg.textContent = '';
+    var username = userEl.value.trim();
+    var password = passEl.value;
+    if (!username || !password) {
+      msg.textContent = 'Enter your username and password.';
+      (username ? passEl : userEl).focus();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Logging in...';
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password })
+    })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) throw new Error(data.error || 'Login failed.');
+          window.location.replace('/');   // diretso sa Student Dashboard
+        });
+      })
+      .catch(function (err) {
+        msg.textContent = err.message === 'Failed to fetch'
+          ? 'Cannot reach the server. Make sure it is running.' : err.message;
+        passEl.value = '';
+        passEl.focus();
+        btn.disabled = false;
+        btn.textContent = 'Log in';
+      });
+  });
+</script>
+</body>
+</html>
