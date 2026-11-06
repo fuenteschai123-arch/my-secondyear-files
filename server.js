@@ -6,7 +6,8 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const PORT = 3000;
+app.set('trust proxy', 1);
+const PORT = process.env.PORT || 3000;
 const YEAR_LEVELS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 
 // ---- LOGIN SETTINGS ----
